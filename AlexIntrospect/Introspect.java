@@ -4,6 +4,8 @@ import java.beans.MethodDescriptor;
 import java.lang.reflect.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -17,11 +19,12 @@ import AlexIntrospect.IntrospectExceptions.NoClassFoundException;
 
 /**
  * @author aoikonomou
- * Success up to a point. It prints the correct data after going through the introspection
- * NEEDS
- * -------
- * 1)Incorporate convertToObject in the introspect methods
- * 2)Make the introspect method work with multiple arguments and not just one(see method getMethodArguments)
+ * 
+ * Introspects an objects and invokes the appropriate methods so as to fill the object with the appropriate information based on the HashMap provided in the argument. The main method in
+ * this class is introspect(which does the above), but there are also other helper methods that can be used, such as getSetters, getGetters, getClass etc.
+ * 
+ * The main purpose of this class is to get info from a request when it arrives from a client and complete operations on that class. However it has not been tested with a request yet.
+ * Need to build a webapp fo' dat shite.
  */
 public class Introspect {
 	
@@ -35,38 +38,25 @@ public class Introspect {
 	 * @throws IllegalAccessException
 	 * @throws IllegalArgumentException
 	 * @throws InvocationTargetException
+	 * @throws ParseException 
 	 */
-	public static Object introspect(Object obj,HashMap<String,Object> values) throws NoClassFoundException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+	public static Object introspect(Object obj,HashMap<String,Object> values) throws NoClassFoundException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, ParseException{
 		Class theClass = getClass(obj);
 		HashMap<String,Method> fieldToMethod=initializeMethodToValue(theClass.getDeclaredFields(), getSetters(theClass));
 		Iterator it = values.entrySet().iterator();
 		while (it.hasNext()) {
 	        Map.Entry pairs = (Map.Entry)it.next();
 	        Method m = fieldToMethod.get(pairs.getKey());
-	        //MethodDetails md = getMethodDetails(m);
-	        Object[] arguments = new Object[1];
-	        arguments[0]=pairs.getValue();
-	      //arguments[0]=convertToObject(md.getArguments().get(0), pairs.getValue().toString());
+	        MethodDetails md = getMethodDetails(m);        
+	        Object[] arguments = new Object[md.getArguments().size()];
+	        for(int i=0;i<arguments.length;i++){
+	        	arguments[i]=convertToObject(md.getArguments().get(i).toString(), pairs.getValue().toString());
+	        }
 	        m.invoke(obj, arguments);
-	        
 	    }
 		return obj;
 		
 	}
-	
-	/*public static Object[] getMethodArguments(MethodDetails md,HashMap<String,Object> values){
-		ArrayList<Class>  args= md.getArguments();
-		Object[] arguments = new Object[args.size()];
-		Iterator it = values.entrySet().iterator();
-		while (it.hasNext()) {
-	        Map.Entry pairs = (Map.Entry)it.next();
-	        Method m = fieldToMethod.get(pairs.getValue());
-	        MethodDetails md = getMethodDetails(m);
-	        m.invoke(obj, args)
-	        //System.out.println(pairs.getKey() + " = " + pairs.getValue()+" "+fieldToRequest.get(pairs.getKey()).getName());
-	        
-	    }
-	}*/
 	
 	/**
 	 * Converts the the value from a string to the given datatype and returns it in the appropriate object
@@ -74,18 +64,22 @@ public class Introspect {
 	 * @param datatype
 	 * @param value
 	 * @return
+	 * @throws ParseException 
 	 */
-	public static Object convertToObject(String datatype,String value){
+	public static Object convertToObject(String datatype,String value) throws ParseException{
 		switch(datatype){
-		case "java.lang.Integer":return new Integer(value);
-		case "java.lang.String":return value;
-		case "java.lang.Double":return new Double(value);
-		case "java.lang.Long":return new Long(value);
-		case "java.lang.Short":return new Short(value);
-		case "java.math.BigInteger":return new BigInteger(value);
-		case "java.math.BigDecimal":return new BigDecimal(value);
-		case "java.lang.Boolean":return new Boolean(value);
-		case "java.sql.Date":return new Date(value);
+		case "class java.lang.Integer":return new Integer(value);
+		case "class java.lang.String":return value;
+		case "class java.lang.Double":return new Double(value);
+		case "class java.lang.Long":return new Long(value);
+		case "class java.lang.Short":return new Short(value);
+		case "class java.math.BigInteger":return new BigInteger(value);
+		case "class java.math.BigDecimal":return new BigDecimal(value);
+		case "class java.lang.Boolean":return new Boolean(value);
+		case "class java.sql.Date":
+			SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd");
+			java.util.Date parsed = format.parse("20110210");
+	        return new java.sql.Date(parsed.getTime());
 		}
 		return "This datatype is not defined in Introspect";
 	}

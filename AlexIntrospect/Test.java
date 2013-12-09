@@ -3,6 +3,7 @@ package AlexIntrospect;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Date;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -81,6 +82,9 @@ public class Test {
 		} catch (NoClassFoundException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		//System.out.println(Introspect.introspect(obj, values));
 		System.out.println("=====================");
@@ -93,9 +97,6 @@ public class Test {
 		System.out.println(dm.getUsername());
 		System.out.println(dm.getMobileNo());
 		System.out.println(dm.getBirthday());
-		
-		
-		
 		
 	}
 
